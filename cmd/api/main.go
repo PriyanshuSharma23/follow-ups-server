@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"flag"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/PriyanshuSharma23/follow-ups-server/internals/jsonlogger"
+	_ "github.com/lib/pq"
 )
 
 var (
@@ -45,13 +49,48 @@ func main() {
 
 	logger := jsonlogger.NewLogger(os.Stdout, jsonlogger.LevelInfo)
 
+	db, err := openDB(cfg)
+	if err != nil {
+		logger.PrintFatal(err, nil)
+	}
+	defer db.Close()
+
+	logger.PrintInfo("database pool established", nil)
+
 	app := &application{
 		config: cfg,
 		logger: logger,
 	}
 
-	err := app.serve()
+	err = app.serve()
 	if err != nil {
 		logger.PrintFatal(err, nil)
 	}
+}
+
+func openDB(cfg config) (*sql.DB, error) {
+	db, err := sql.Open("postgres", cfg.db.dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	db.SetMaxOpenConns(cfg.db.maxOpenConns)
+	db.SetMaxIdleConns(cfg.db.maxIdleConns)
+
+	d, err := time.ParseDuration(cfg.db.maxIdleTime)
+	if err != nil {
+		return nil, err
+	}
+
+	db.SetConnMaxIdleTime(d)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	err = db.PingContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return db, nil
 }
