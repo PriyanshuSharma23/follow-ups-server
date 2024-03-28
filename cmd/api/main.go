@@ -4,10 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"flag"
+	"fmt"
 	"os"
 	"sync"
 	"time"
 
+	"github.com/PriyanshuSharma23/follow-ups-server/internals/data"
 	"github.com/PriyanshuSharma23/follow-ups-server/internals/jsonlogger"
 	_ "github.com/lib/pq"
 )
@@ -32,6 +34,7 @@ type application struct {
 	config config
 	logger *jsonlogger.Logger
 	wg     sync.WaitGroup
+	models data.Models
 }
 
 func main() {
@@ -45,7 +48,15 @@ func main() {
 	flag.IntVar(&cfg.db.maxOpenConns, "db-max-open-conns", 25, "PostgresSQL max open connecitons")
 	flag.StringVar(&cfg.db.maxIdleTime, "db-max-idle-time", "15m", "PostgresSQL max connection idle time")
 
+	displayVersion := flag.Bool("version", false, "Display current version of the application")
+
 	flag.Parse()
+
+	if *displayVersion {
+		fmt.Printf("Version:   \t%s\n", version)
+		fmt.Printf("Build Time:\t%s\n", buildTime)
+		os.Exit(0)
+	}
 
 	logger := jsonlogger.NewLogger(os.Stdout, jsonlogger.LevelInfo)
 
@@ -60,6 +71,7 @@ func main() {
 	app := &application{
 		config: cfg,
 		logger: logger,
+		models: data.NewModels(db),
 	}
 
 	err = app.serve()
