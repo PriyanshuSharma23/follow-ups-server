@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -23,6 +24,7 @@ var (
 type config struct {
 	port int
 	env  string
+	cors struct{ trustedOrigins []string }
 	db   struct {
 		dsn          string
 		maxIdleTime  string
@@ -37,14 +39,19 @@ type config struct {
 		port     int
 		retries  int
 	}
+	limter struct {
+		rps     float64
+		burst   int
+		enabled bool
+	}
 }
 
 type application struct {
 	config config
 	logger *jsonlogger.Logger
-	wg     sync.WaitGroup
 	models data.Models
 	mailer mailer.Mailer
+	wg     sync.WaitGroup
 }
 
 func main() {
@@ -58,12 +65,21 @@ func main() {
 	flag.IntVar(&cfg.db.maxOpenConns, "db-max-open-conns", 25, "PostgresSQL max open connecitons")
 	flag.StringVar(&cfg.db.maxIdleTime, "db-max-idle-time", "15m", "PostgresSQL max connection idle time")
 
+	flag.Float64Var(&cfg.limter.rps, "limiter-rps", 2, "Rate limiter maximum requests per second.")
+	flag.IntVar(&cfg.limter.burst, "limiter-burst", 4, "Rate limiter maximum burst.")
+	flag.BoolVar(&cfg.limter.enabled, "limiter-enabled", true, "Enable rate limiter")
+
 	flag.StringVar(&cfg.smtp.host, "smtp-host", "sandbox.smtp.mailtrap.io", "SMTP host")
 	flag.IntVar(&cfg.smtp.port, "smtp-port", 2525, "SMTP port")
 	flag.StringVar(&cfg.smtp.username, "smtp-username", "7beb0df3023aa3", "SMTP username")
 	flag.StringVar(&cfg.smtp.password, "smtp-password", "1e59f8334837b1", "SMTP password")
 	flag.StringVar(&cfg.smtp.sender, "smtp-sender", "FollowUps <inbox.priyanshu@gmail.com>", "SMTP sender")
 	flag.IntVar(&cfg.smtp.retries, "smtp-retires", 3, "SMTP number of retries for failed email delivery")
+
+	flag.Func("cors-trusted-origins", "Trusted CORS origins (space separated)", func(s string) error {
+		cfg.cors.trustedOrigins = strings.Fields(s)
+		return nil
+	})
 
 	displayVersion := flag.Bool("version", false, "Display current version of the application")
 
@@ -93,6 +109,10 @@ func main() {
 		cfg.smtp.sender,
 		cfg.smtp.retries,
 	)
+
+	if err != nil {
+		panic(err)
+	}
 
 	app := &application{
 		config: cfg,

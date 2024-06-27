@@ -9,4 +9,10 @@ require (
 	golang.org/x/crypto v0.21.0
 )
 
-require gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+require (
+	github.com/felixge/httpsnoop v1.0.4
+	github.com/justinas/alice v1.2.0
+	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce
+	golang.org/x/time v0.5.0
+	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+)
