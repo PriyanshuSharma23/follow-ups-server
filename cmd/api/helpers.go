@@ -14,21 +14,20 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-// func (app *application) background(fn func()) {
-// 	app.wg.Add(1)
-//
-// 	go func() {
-// 		defer func() {
-// 			if err := recover(); err != nil {
-// 				app.logger.PrintError(fmt.Errorf("%s", err), nil)
-// 			}
-// 		}()
-//
-// 		// call background job
-// 		fn()
-// 		app.wg.Done()
-// 	}()
-// }
+func (app *application) background(fn func()) {
+	app.wg.Add(1)
+
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				app.logger.PrintError(fmt.Errorf("%s", err), nil)
+			}
+		}()
+
+		fn()
+		app.wg.Done()
+	}()
+}
 
 func (app *application) readString(q *url.Values, key string, defaultValue string) string {
 	val := q.Get(key)

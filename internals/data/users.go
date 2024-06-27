@@ -85,11 +85,11 @@ func ValidateUser(v *validator.Validator, user *User) {
 	}
 }
 
-type UserModel struct {
+type UsersModel struct {
 	DB *sql.DB
 }
 
-func (m UserModel) Insert(user *User) error {
+func (m UsersModel) Insert(user *User) error {
 	stmt := `INSERT INTO users (name, email, password_hash, activated)
 		     VALUES ($1, $2, $3, $4) 
 			 RETURNING id, created_at, version`
@@ -111,7 +111,7 @@ func (m UserModel) Insert(user *User) error {
 	return nil
 }
 
-func (m UserModel) GetByEmail(email string) (*User, error) {
+func (m UsersModel) GetByEmail(email string) (*User, error) {
 	stmt := `SELECT id, created_at, name, email, password_hash, activated, version 
 	 		 FROM users
 			 WHERE email=$1`
@@ -141,7 +141,7 @@ func (m UserModel) GetByEmail(email string) (*User, error) {
 	return &user, nil
 }
 
-func (m UserModel) GetForToken(tokenPlaintext, scope string) (*User, error) {
+func (m UsersModel) GetForToken(tokenPlaintext, scope string) (*User, error) {
 	stmt := `
           SELECT users.id, users.created_at, users.name, users.email, users.password_hash, users.activated, users.version 
           FROM users
@@ -175,7 +175,7 @@ func (m UserModel) GetForToken(tokenPlaintext, scope string) (*User, error) {
 	return &user, nil
 }
 
-func (m UserModel) UpdateUser(user *User) error {
+func (m UsersModel) UpdateUser(user *User) error {
 	stmt := `
 			UPDATE users 
 			SET name=$1, email=$2, password_hash=$3, activated=$4, version=version + 1
