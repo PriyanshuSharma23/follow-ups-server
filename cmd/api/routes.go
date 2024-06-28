@@ -20,6 +20,13 @@ func (app *application) routes() http.Handler {
 
 	router.HandlerFunc(http.MethodGet, "/v1/healthcheck", app.healthcheckHandler)
 
+	router.HandlerFunc(http.MethodGet, "/v1/vehicles", app.listVehiclesHandler)
+	router.HandlerFunc(http.MethodGet, "/v1/vehicles/:id", app.showVehiclesHandler)
+	router.HandlerFunc(http.MethodPost, "/v1/vehicles", app.createVehiclesHandler)
+	router.HandlerFunc(http.MethodPatch, "/v1/vehicles/:id", app.updateVehiclesHandler)
+	router.HandlerFunc(http.MethodDelete, "/v1/vehicles/:id", app.deleteVehiclesHandler)
+
+	// User and Auth
 	router.HandlerFunc(http.MethodPut, "/v1/users/resetpassword", app.resetPasswordHandler)
 	router.HandlerFunc(http.MethodPut, "/v1/users/updatepassword", app.updatePasswordHandler)
 	router.HandlerFunc(http.MethodPost, "/v1/users/register", app.registerUserHandler)
